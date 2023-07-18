@@ -3,13 +3,15 @@ package parser
 import sttp.client3._
 import sttp.client3.circe._
 import io.circe.Error
-import parser.dto.{CardInfoDto, CardPhotoDto, ParserDto, RecDto}
+import parser.dto.{CardInfoDto, CardPhotoDto, CatDto, RecDto, StartDto}
+import parser.model.wildberries.{Data, Item, Products, VendorCode}
+import sttp.model.Uri
 
 import java.net.URL
 import java.nio.file.{Files, Paths}
 
 object WildberriesParser {
-  def parseCategoriesPage(parserDto: ParserDto):Products = {
+  def getCategoriesPage(parserDto: CatDto):Products = {
     val params = Map(
       "resultset" -> parserDto.resultset,
       "query" -> parserDto.query,
@@ -79,5 +81,36 @@ object WildberriesParser {
     println(photo_url)
 
     Files.copy(photo_url.openStream(), destination)
+  }
+
+  def start(startDto: StartDto): Unit = {
+
+    val categoryParseUrl: Uri = uri"https://search.wb.ru/exactmatch/ru/common/v4/search"
+    val getRecommendedUrl: Uri = uri"https://waterfall-card-rec.wildberries.ru/api/v1/recommendations"
+    val getCardInfoUrl: Uri = uri"https://card.wb.ru/cards/detail"
+
+    val category = CatDto(categoryParseUrl, startDto.query, startDto.sort, startDto.resultset)
+    val product = WildberriesParser.getCategoriesPage(category)
+
+    product.products.foreach { x =>
+      x.productIterator.foreach { value =>
+        println(s"${x.productElementName(x.productIterator.indexOf(value))} : $value")
+      }
+
+      println()
+
+      val rec = RecDto(getRecommendedUrl, x.id)
+
+      WildberriesParser.getRecommended(rec).foreach( x => {
+        val card = CardInfoDto(getCardInfoUrl, x.nm)
+
+        WildberriesParser.getCardInfo(card).map( x => {
+          x.productIterator.foreach { value =>
+            println(s"${x.productElementName(x.productIterator.indexOf(value))} : $value")
+          }
+          println()
+        })
+      })
+    }
   }
 }
