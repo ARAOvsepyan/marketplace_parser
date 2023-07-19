@@ -2,7 +2,6 @@ package parser.model.aliexpress
 
 import io.circe.Codec
 import io.circe.generic.semiauto.deriveCodec
-import jdk.incubator.vector.ByteVector
 
 import java.util.Base64
 
