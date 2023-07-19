@@ -3,9 +3,10 @@ package parser
 import sttp.client3._
 import sttp.client3.circe._
 import io.circe.Error
+
 import parser.dto.{CardInfoDto, CardPhotoDto, CatDto, RecDto, StartDto}
 import parser.model.wildberries.{Data, Item, Products, VendorCode}
-import sttp.model.Uri
+
 
 import java.net.URL
 import java.nio.file.{Files, Paths}
@@ -15,7 +16,7 @@ object WildberriesParser {
     val params = Map(
       "resultset" -> parserDto.resultset,
       "query" -> parserDto.query,
-      "sort" -> parserDto.sort, 
+      "sort" -> parserDto.sort,
       "dest" -> parserDto.dest
     )
 
@@ -85,11 +86,7 @@ object WildberriesParser {
 
   def start(startDto: StartDto): Unit = {
 
-    val categoryParseUrl: Uri = uri"https://search.wb.ru/exactmatch/ru/common/v4/search"
-    val getRecommendedUrl: Uri = uri"https://waterfall-card-rec.wildberries.ru/api/v1/recommendations"
-    val getCardInfoUrl: Uri = uri"https://card.wb.ru/cards/detail"
-
-    val category = CatDto(categoryParseUrl, startDto.query, startDto.sort, startDto.resultset)
+    val category = CatDto(Config.WB_CAT_URL, startDto.query, startDto.sort, startDto.resultset)
     val product = WildberriesParser.getCategoriesPage(category)
 
     product.products.foreach { x =>
@@ -99,10 +96,10 @@ object WildberriesParser {
 
       println()
 
-      val rec = RecDto(getRecommendedUrl, x.id)
+      val rec = RecDto(Config.WB_REC_URL, x.id)
 
       WildberriesParser.getRecommended(rec).foreach( x => {
-        val card = CardInfoDto(getCardInfoUrl, x.nm)
+        val card = CardInfoDto(Config.WB_CARD_INFO_URL, x.nm)
 
         WildberriesParser.getCardInfo(card).map( x => {
           x.productIterator.foreach { value =>
