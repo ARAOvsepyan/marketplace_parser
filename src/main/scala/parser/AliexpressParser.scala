@@ -8,17 +8,15 @@ import sttp.client3.circe._
 import io.circe.Error
 import io.circe.syntax.EncoderOps
 
-import java.util.Base64
 
 object AliexpressParser {
   def parseCategoriesPage(parserDto: RequestData): List[AliIndex] = {
-    val encodedSearchInfo = parserDto.searchInfo + Base64.getEncoder.encodeToString(parserDto.decodedSearchInfo.getBytes("UTF-8"))
 
     val params = Map(
       "catId" -> parserDto.catId,
       "g" -> parserDto.g,
       "source" -> parserDto.source,
-      "searchInfo" -> encodedSearchInfo,
+      "searchInfo" -> parserDto.searchInfo,
       "isGoldenItems" -> parserDto.isGoldenItems,
       "isFavorite" -> parserDto.isFavorite
     )
@@ -26,7 +24,7 @@ object AliexpressParser {
     val request = basicRequest
       .body(params.asJson)
       .header("Content-Type", "application/json")
-      .post(uri"https://aliexpress.ru/aer-jsonapi/v1/category_filter?_bx-v=2.2.3")
+      .post(Config.AE_CAT_URL)
       .response(asJson[AliData])
 
     val backend: SttpBackend[Identity, Any] = HttpClientSyncBackend()
@@ -39,15 +37,15 @@ object AliexpressParser {
     }
   }
 
-  def getRecommended(): Unit = {
-    ???
-  }
-
-  def getCardInfo(): Unit = {
-    ???
-  }
-
-  def getCardPhoto(): Unit = {
-    ???
-  }
+//  def getRecommended(): Unit = {
+//    ???
+//  }
+//
+//  def getCardInfo(): Unit = {
+//    ???
+//  }
+//
+//  def getCardPhoto(): Unit = {
+//    ???
+//  }
 }
